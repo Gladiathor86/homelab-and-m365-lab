@@ -1,0 +1,186 @@
+# Microsoft 365 Developer Program – Dokumentáció és integrációs útmutató
+
+Ez a dokumentum összefoglalja a Microsoft 365 Developer Program használatát, az E5 Sandbox környezet felépítését, első lépéseit és a HomeLab rendszerrel való integráció lehetőségeit.
+
+## 1. A Microsoft 365 E5 Developer Sandbox áttekintése
+
+A Microsoft 365 Developer Program részeként létrehozható egy teljes értékű fejlesztői környezet (E5 Sandbox), amely többek között az alábbi szolgáltatásokat tartalmazza:
+
+- Exchange Online (postaláda teszteléshez)
+- SharePoint Online és OneDrive for Business
+- Microsoft Teams teljes verzió
+- Azure Active Directory / Entra ID Premium P2
+- Microsoft Graph API teljes hozzáférés
+- 25 előre generált vagy saját tesztfelhasználó
+
+A sandbox 90 napig érvényes, de automatikusan hosszabbodik, ha aktív marad.
+
+## 2. Sandbox típusok
+
+### Instant Sandbox
+- 25 automatikus tesztfelhasználó
+- Azonnali indulás
+- Saját domain nem használható
+
+### Configurable Sandbox
+- Saját domain csatlakoztatható
+- Egyedi felhasználók hozhatók létre
+- Több idő beállítani, de rugalmasabb
+
+## 3. Sandbox létrehozásának lépései
+
+1. Belépés a fejlesztői profiloldalra:  
+   https://developer.microsoft.com/en-us/microsoft-365/profile
+
+2. A „Set up E5 developer subscription” opció kiválasztása.
+
+3. Tenant név megadása.
+
+4. Adminisztrátori felhasználónév és jelszó megadása.
+
+5. Régió kiválasztása (European Union ajánlott).
+
+6. A rendszer 1–5 perc alatt létrehozza a Sandbox tenantot.
+
+A létrehozás után az admin fiók így néz ki:
+admin@<tenant>.onmicrosoft.com
+
+Ez lesz a Microsoft 365 szolgáltatásokba való belépéshez szükséges üzleti fiók.
+
+## 4. Admin portálok elérése
+
+A személyes Microsoft-fiók nem alkalmas admin portálra történő belépéshez.  
+A létrehozott sandbox adminisztrátor felhasználóval a következő oldalak érhetők el:
+
+- Microsoft 365 admin: https://admin.microsoft.com
+- Entra ID admin: https://entra.microsoft.com
+- Exchange admin: https://admin.exchange.microsoft.com
+- Security admin: https://security.microsoft.com
+- Teams admin: https://admin.teams.microsoft.com
+
+## 5. Első lépések a Sandboxban
+
+1. Tenant alapadatok ellenőrzése  
+2. Tesztfelhasználók áttekintése  
+3. MFA bekapcsolása admin számára  
+4. Teams engedélyezése  
+5. SharePoint site-ok létrehozása  
+6. OneDrive inicializálása  
+7. Exchange levelezés tesztelése (küldés/fogadás)
+
+## 6. HomeLab integrációs lehetőségek
+
+### Proxmox vagy más rendszerek értesítéseinek Teams csatornára irányítása
+Webhookok segítségével megoldható:
+- Proxmox backup értesítések
+- Netdata riasztások
+- Rendszerhibák vagy figyelmeztetések
+
+### Backupok küldése Exchange SMTP használatával
+SMTP szerver paraméterek:
+- Host: smtp.office365.com
+- Port: 587
+- Titkosítás: STARTTLS
+- Felhasználónév: admin@<tenant>.onmicrosoft.com
+
+### Dokumentáció szinkronizálása OneDrive-ra
+A HomeLab dokumentációk és konfigurációk OneDrive-ban tarthatók:
+- homelab_setup.md
+- homelab_setup_lenovo_server.md
+- goals.md
+- Docker Compose fájlok
+- Script-archívumok
+
+### Microsoft Graph integrációk
+A következő műveletek egyszerűen elérhetők:
+- Felhasználók listázása
+- Teams üzenetek küldése automatizáltan
+- SharePoint dokumentumok kezelése
+- Saját szkriptek futtatása PowerShell vagy Python alól
+
+## 7. Zero Trust és VPN integráció
+
+### Tailscale
+- Zero Trust hozzáférés az admin portálokhoz
+- Tailscale IP-korlátozás Conditional Access szabályokban
+
+### Twingate
+- Biztonságos kapcsolat a HomeLab és a M365 admin portálok között
+
+### WireGuard
+- Alternatív VPN megoldás saját infrastruktúrához
+
+A sandbox tökéletes terep Conditional Access szabályok, eszközszabályok és hozzáférés-kezelési logikák tesztelésére.
+
+## 8. Saját domain csatlakoztatása
+
+Configurable Sandbox esetén hozzáadható saját domain (Cloudflare DNS támogatott).  
+Tesztelhető:
+
+- MX rekordok
+- SPF, DKIM, DMARC konfiguráció
+- SMTP relay
+- Küldési és fogadási szabályok
+
+## 9. Sandbox hibaelhárítás
+
+### „You don’t currently qualify” üzenet
+A fiók még nincs teljesen aktiválva.  
+Megoldás:
+- Profilbeállítások kitöltése
+- Fejlesztői technológiák kijelölése
+- 1–24 órán belül automatikusan aktiválódik
+
+### Admin portálra nem enged be
+A személyes Microsoft-fiók nem jogosult.  
+Csak az új sandbox adminnal lehet belépni.
+
+### Tenant létrejött, de még nem használható
+A szolgáltatások propagációja 5–10 percet igényel.
+
+## 10. Ajánlott tanulási útvonal a sandbox mellé
+
+Microsoft Learn modulok:
+- MS-900 (Microsoft 365 Fundamentals)
+- AZ-900 (Azure Fundamentals)
+- SC-900 (Security, Compliance and Identity)
+
+Gyakorlati feladatok:
+- Conditional Access szabály létrehozása
+- Teams webhook beállítása
+- SharePoint site struktúra kialakítása
+- Outlook transport szabályok tesztelése
+- Graph API lekérdezések készítése
+
+## 11. Zero Trust hozzáférés gyakorlati példák
+
+- Admin portál elérése csak MFA-val
+- Admin portál elérése csak EU IP-tartományból
+- Hozzáférés engedélyezése kizárólag Tailscale IP-ről
+- FIDO2-alapú passwordless bejelentkezés
+- Risk-based Conditional Access szabályok tesztelése
+
+## 12. SMTP beállítás Proxmox rendszerhez
+
+A Proxmox e-mail értesítései küldhetők az E5 Sandbox Exchange szolgáltatásán keresztül.
+
+Proxmox beállítás:
+- Datacenter → Notifications → Email
+- SMTP: smtp.office365.com
+- Encryption: TLS
+- Port: 587
+- Felhasználó: admin@<tenant>.onmicrosoft.com
+
+Ez alkalmas backup értesítések vagy általános figyelmeztetések küldésére.
+
+## Összegzés
+
+A Microsoft 365 E5 Developer Sandbox kiváló gyakorlókörnyezet:
+
+- Microsoft 365 adminisztrációhoz
+- Exchange és Teams működésének megértéséhez
+- Identity és Zero Trust megoldások gyakorlásához
+- Automatizálások és Graph API használatához
+- HomeLab infrastruktúra integrációjához
+
+
