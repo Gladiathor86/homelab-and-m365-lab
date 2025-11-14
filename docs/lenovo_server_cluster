@@ -1,0 +1,147 @@
+# HomeLab – Lenovo ThinkCentre M910q szerverek dokumentáció  
+*(2025. november – saját jegyzetek)*
+
+Ez a dokumentum a Lenovo M910q mini PC-kből kialakított Proxmox klaszterem teljes beállítását, terveit és irányelveit tartalmazza. A cél egy stabil, csendes, alacsony fogyasztású, mégis erős HomeLab infrastruktúra felépítése, amely támogatja a média-, hálózati-, virtualizációs- és fejlesztői szolgáltatásokat is.
+
+---
+
+##  Hardverösszeállítás
+
+**3 × Lenovo ThinkCentre M910q mini PC**
+
+Mindegyik gép főbb specifikációi:
+
+- CPU: **Intel i5-7500T** (4 mag / 4 szál, 2.7–3.3 GHz)
+- RAM: 2 gép **8 GB**, 1 gép **16 GB** DDR4
+- Tárhely:  
+  - **256 GB NVMe SSD** (rendszer + VM-ek)  
+  - **1 db üres 2.5” SATA hely** (későbbi bővítéshez)
+- BIOS upgrade elvégezve (DOS-os Lenovo flash utility használatával)
+
+A három gép különböző szerepköröket lát majd el a klaszterben.
+
+---
+
+##  BIOS beállítások (optimalizált HomeLab környezethez)
+
+**Startup**
+- UEFI only  
+- CSM: Disabled  
+- Quick Boot: Enabled  
+- Boot sorrend: NVMe → USB → Network
+
+**Power**
+- After Power Loss: Power On  
+- Deep Sleep: Disabled  
+- Wake on LAN: Enabled  
+- Intel AMT / vPro: Enabled
+
+**Security**
+- Secure Boot: Disabled  
+- TPM 2.0: Enabled
+
+**Hűtés és teljesítmény**
+- Thermal Mode: Performance  
+- Fan Always On: Enabled  
+- Intel Turbo Boost: Enabled
+
+**Virtualizáció**
+- Intel VT-x: Enabled  
+- Intel VT-d (IOMMU): Enabled  
+- Hyper-Threading: Enabled  
+- Execute Disable Bit: Enabled
+
+**Eszközök**
+- SATA: AHCI  
+- M.2 slot: Enabled  
+- USB portok: Enabled
+
+---
+
+##  Klaszter szerepkörök (tervezett felosztás)
+
+| Node      | Memória | Funkció                        | Tervezett szolgáltatások |
+|-----------|---------|--------------------------------|---------------------------|
+| **Core**  | 16 GB   | Proxmox Master + központi szolgáltatások | Pi-hole, WireGuard, NGINX Proxy Manager, Nextcloud (később) |
+| **Media** | 8 GB    | Média- és letöltőszerver | Plex/Jellyfin, qBittorrent, Glances/Netdata |
+| **Utility** | 8 GB  | Automatizálás + egyéb háttérszolgáltatások | Home Assistant, Vaultwarden, Uptime Kuma, Grafana |
+
+A szerepkörök a felhasznált erőforrások alapján tetszés szerint módosíthatóak.
+
+---
+
+##  Hálózati és szolgáltatási irányok
+
+- Pi-hole + DNS over HTTPS / DNS over TLS
+- WireGuard vagy Tailscale / Twingate (Zero Trust VPN)
+- Cloudflare DDNS (távoli eléréshez)
+- NGINX Proxy Manager (reverse proxy + Let’s Encrypt)
+- Proxmox klaszter LXC konténerekkel és VM-ekkel
+- Docker / Portainer alkalmazáskörnyezet
+
+---
+
+##  Ajánlott szolgáltatás-stack
+
+**Core node**
+- Portainer  
+- File Browser  
+- Vaultwarden  
+- Nextcloud (ha lesz rá külön tárhely)  
+
+**Media node**
+- Plex vagy Jellyfin  
+- qBittorrent  
+- *arr stack (Radarr, Sonarr, Bazarr, Prowlarr) – később*  
+- Tdarr (transzkódolás – csak ha a hardver bírja)  
+
+**Utility node**
+- Home Assistant  
+- Zigbee2MQTT  
+- Mosquitto MQTT broker  
+- Uptime Kuma  
+- Grafana + Prometheus  
+
+---
+
+##  Tárhely és fájlrendszer
+
+- **NVMe SSD**: rendszer, VM-ek, LXC konténerek  
+- **2.5” SATA**: későbbi bővítésekhez (adat + backup)  
+- USB-s külső meghajtók: média adattár (SMB/NFS megosztással)
+
+Későbbi tervek:
+- ZFS mirror a 2.5” SATA meghajtók között  
+- NAS-szerű központi storage  
+- Ceph cluster (ha több diszket kapnak a gépek)
+
+---
+
+##  Energiakezelés, hűtés és felügyelet
+
+- Automatikus boot áramszünet után  
+- Ventillátor fix bekapcsolt mód (hosszú távú stabilitás)  
+- Netdata és Glances telepítve a hőmérséklet- és terhelésfigyeléshez  
+- CPU frekvenciaskálázás (auto-cpufreq vagy cpupower)
+
+---
+
+##  Jövőbeli fejlesztési lehetőségek
+
+- Ceph vagy NFS alapú megosztott storage Proxmox alatt  
+- Kubernetes (k3s) cluster  
+- Ansible alapú automatizálás  
+- Tailscale ACL-ek, Zero Trust koncepció bővítése  
+- Grafana Cloud / Prometheus remote monitoring  
+- M365 + Microsoft Graph integráció (Teams értesítések stb.)
+
+---
+
+##  Következő lépések
+- Proxmox telepítése mindhárom gépre  
+- Klaszter létrehozása + időszinkron ellenőrzése  
+- Alap node szerepkörök kiosztása  
+- USB-s meghajtók stabil mountolása és megosztása  
+- Docker környezet telepítése a Media és Utility node-okra  
+
+A dokumentumot folyamatosan bővítem a saját tapasztalataim alapján.
