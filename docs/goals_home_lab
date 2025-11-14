@@ -1,0 +1,151 @@
+# HomeLab – Célok és rendszerterv (goals.md)
+
+Ez a dokumentum a HomeLab rendszer felépítésének céljait, lépéseit és alapelveit tartalmazza. A cél egy stabil, jól dokumentált, skálázható infrastruktúra kialakítása Proxmox alapokon, különböző szolgáltatások integrálásával.
+
+## 1. Proxmox telepítés és alapbeállítások
+
+A fő hypervisor rendszer a Proxmox VE 9.0 lesz.
+
+- Erős root jelszó megadása
+- A node-ok egységes névadási rendszer szerint készülnek
+- A telepítés során megadható IP-cím lehet statikus vagy DHCP-alapú, a végleges kiosztást DHCP reservation tartja karban
+- Gateway és DNS beállítása
+- A Proxmox webfelület elérése: https://<node-ip>:8006
+- A fizetős repository letiltása, a no-subscription repo engedélyezése
+- Rendszerfrissítések futtatása, majd újraindítás
+
+## 2. Storage és LVM tervezés
+
+A Proxmox két storage-t hoz létre: `local` és `local-lvm`.
+
+Tervezett módosítások:
+
+1. A `local-lvm` törlése, ha nincs rá szükség
+2. A root partíció kiterjesztése:
+   lvremove /dev/pve/data
+   lvresize -l +100%FREE /dev/pve/root
+   resize2fs /dev/mapper/pve-root
+
+A csatlakoztatott külső HDD-kre kerülnek majd a VM-ek, LXC-k és médiaadatok. Formázás nem szükséges, ha adat van rajtuk.
+
+## 3. IOMMU engedélyezése (hardveres átadás)
+
+CPU és GPU passthrough támogatásához az IOMMU engedélyezése szükséges.
+
+1. nano /etc/default/grub
+2. GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on"
+3. update-grub
+4. Újraindítás
+5. Ellenőrzés:
+   dmesg | grep -e DMAR -e IOMMU
+   dmesg | grep 'remapping'
+
+Külön GPU hiányában a CPU passthrough releváns.
+
+## 4. LXC konténerek létrehozása
+
+A Proxmox natívan támogatja az LXC konténereket. Tervezett konténerkonfiguráció:
+
+- Template: Ubuntu 22.04 vagy Debian
+- ID: 100+
+- Unprivileged mód bekapcsolva
+- Disk: 8–10 GB
+- CPU: 1–2 mag
+- RAM: 512–1024 MB
+- Hálózat: DHCP vagy statikus, de IP foglalással a routerben
+- DNS: automatikus vagy saját
+- IPv6: tiltva
+- SSH opcionális
+
+Később további storage útvonalak adhatók hozzá a konténer config fájljához.
+
+## 5. Virtuális gépek létrehozása
+
+A VM-ek akkor szükségesek, ha teljes operációs rendszer környezet kell.
+
+Általános beállítások:
+- CPU: 2–4 mag
+- RAM: 2–4 GB
+- Disk: 32–64 GB
+- ISO képfájl feltöltése Proxmoxba
+- Telepítés után a CD eltávolítása
+- GPU passthrough csak dedikált kártyával releváns
+
+## 6. Hálózati szolgáltatások és adblock rendszerek
+
+Tervezett elemek:
+
+- Pi-hole (már működik)
+- AdGuard Home (alternatíva vagy kiegészítés)
+- AdGuard telepítése helper scripttel
+- Unbound DNS a Pi-hole mögé DNS cache-nek
+
+## 7. Proxmox klaszter létrehozása
+
+A három Lenovo node klaszterbe szervezése:
+
+1. A fő node: Create Cluster
+2. A további node-ok: Join Cluster
+3. Root jelszó megadása
+4. Egyedi VM és LXC ID-k biztosítása
+
+A sikeres csatlakozás után a klaszter minden node-on látható lesz.
+
+## 8. Alap szerverfunkciók kialakítása
+
+A rendszerben kialakítandó alap funkciók:
+
+- Webszerver (NGINX vagy Apache)
+- SMB/NFS fájlmegosztás
+- Nyomtatómegosztás (CUPS)
+- Böngészőből kezelhető fájlkezelő alkalmazás
+
+## 9. VPN és Zero-Trust komponensek
+
+Tervezett megoldások:
+
+- WireGuard szerver
+- Tailscale hálózat (Zero Trust VPN)
+- Twingate privát eléréshez
+
+A VPN-ek a távoli biztonságos hozzáférést és szeparációt szolgálják.
+
+## 10. Média- és automatizációs szolgáltatások
+
+Telepítendő és tesztelendő rendszerek:
+
+- Plex vagy Jellyfin
+- Tautulli
+- Radarr, Sonarr, Lidarr, Bazarr, Prowlarr
+- qBittorrent
+- Syncthing
+- Home Assistant
+- Zigbee2MQTT
+- Mosquitto
+- Grafana (opcionális)
+- Glance vagy Homarr dashboard
+- Portainer
+- Nextcloud (később, ha lesz dedikált tárhely)
+
+## 11. Fájlmegosztás és adattárolás
+
+A tervezett fájlrendszer és adattárolási struktúra:
+
+- Külső USB-s HDD-k használata Proxmox alatt
+- SMB megosztások Windows rendszerekhez
+- NFS megosztások Linux rendszerekhez
+- Média mappák szétválasztása: filmek, sorozatok, zenék, képek, letöltések
+- Egységes könyvtárstruktúra tervezése
+
+## Összegzés
+
+Ez a dokumentum a teljes HomeLab infrastruktúra felépítésének céljait és terveit írja le. A rendszer fokozatosan bővíthető, és a Proxmox alkalmas:
+
+- konténerek,
+- virtuális gépek,
+- hálózati szolgáltatások,
+- média rendszerek,
+- automatizáció,
+- Zero Trust hozzáférés
+
+felépítésére és üzemeltetésére.
